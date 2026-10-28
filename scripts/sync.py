@@ -45,6 +45,7 @@ COLUMNS = {
     "cv": "CV",
     "action": "Action",
     "consent": "Consent",
+    "hidden": "Hidden",  # organizer-only column added to the response Sheet
 }
 REQUIRED = ["timestamp", "name", "affiliation", "consent"]
 
@@ -187,18 +188,25 @@ def main():
         i = col.get(field)
         return row[i].strip() if i is not None and i < len(row) else ""
 
-    # Latest response per person (by email, falling back to name).
-    latest = {}
-    for r in responses:
-        key = get(r, "email").lower() or norm(get(r, "name"))
+    # Latest response per person (by email, falling back to name). Without an
+    # email column (data/responses.csv, already collapsed by the Apps Script)
+    # every row is a different person, even if two share a name.
+    latest, hidden = {}, set()
+    for n, r in enumerate(responses):
+        key = (get(r, "email").lower() or norm(get(r, "name"))) if "email" in col else n
+        if get(r, "hidden"):
+            hidden.add(key)  # hiding any row hides the person
         t = parse_time(get(r, "timestamp"))
         if key not in latest or t >= latest[key][0]:
             latest[key] = (t, r)
 
     people, problems, unknown_tags, unplaced = [], [], set(), []
-    skipped = {"no consent": 0, "removed": 0}
-    for t, r in latest.values():
+    skipped = {"no consent": 0, "removed": 0, "hidden": 0}
+    for key, (t, r) in latest.items():
         name = get(r, "name")
+        if key in hidden:
+            skipped["hidden"] += 1
+            continue
         if get(r, "action").lower().startswith("remove"):
             skipped["removed"] += 1
             continue
@@ -264,7 +272,7 @@ def main():
     updated = sorted(i for i in new.keys() & old.keys() if strip(new[i]) != strip(old[i]))
 
     print(f"{len(responses)} responses -> {len(people)} listed "
-          f"(skipped: {skipped['no consent']} without consent, {skipped['removed']} removed)")
+          f"(skipped: {skipped['no consent']} without consent, {skipped['removed']} removed, {skipped['hidden']} hidden)")
     for label, ids in (("added", added), ("updated", updated), ("removed", removed)):
         if ids:
             print(f"  {label}: {', '.join(ids)}")
@@ -284,7 +292,7 @@ def main():
     PEOPLE.write_text(json.dumps(people, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     if len(places) > n_places:
         with open(PLACES, "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=PLACE_FIELDS)
+            w = csv.DictWriter(f, fieldnames=PLACE_FIELDS, lineterminator="\n")
             w.writeheader()
             w.writerows(places)
     print(f"wrote {PEOPLE.relative_to(ROOT)}")

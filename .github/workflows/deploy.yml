@@ -1,0 +1,52 @@
+# Rebuilds data/people.json from data/responses.csv (committed by the Apps Script
+# in apps-script/) and deploys the site to GitHub Pages.
+name: Sync and deploy
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: sync-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Sync form responses
+        if: hashFiles('data/responses.csv') != ''
+        run: python scripts/sync.py data/responses.csv | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Commit changes
+        run: |
+          git add data/people.json data/places.csv
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898231+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Sync directory from form responses"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
+      - uses: actions/upload-pages-artifact@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: .
+
+  deploy:
+    needs: sync
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
