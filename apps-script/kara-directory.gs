@@ -58,7 +58,12 @@ function setup() {
   SpreadsheetApp.flush();
 
   const sheet = responseSheet();
-  sheet.getRange(1, sheet.getLastColumn() + 1).setValue("Hidden").setNote("Organizers: put an x here to hide this person.");
+  const last = sheet.getLastColumn();
+  if (last > 0 && sheet.getRange(1, 1).getValue() === "Timestamp") {
+    sheet.getRange(1, last + 1).setValue("Hidden").setNote("Organizers: put an x here to hide this person.");
+  } else {
+    Logger.log('Header row not created yet: after the first response, type "Hidden" in the first empty header cell.');
+  }
 
   ScriptApp.newTrigger("publish").forSpreadsheet(ss).onFormSubmit().create();
   ScriptApp.newTrigger("publish").timeBased().everyHours(6).create(); // catches missed or failed runs
