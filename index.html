@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KARA Directory</title>
+  <meta name="description" content="Find members of the Korean-American Robotics Association by school, company, research area, and location." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&family=Open+Sans:wght@300..700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="https://koreanrobotics.github.io/">KARA <span>Directory</span></a>
+    <input id="search" type="search" placeholder="Search name, school, company, lab" aria-label="Search" />
+    <div class="views">
+      <button type="button" data-view="map"><i class="fa-solid fa-map-location-dot"></i> Map</button>
+      <button type="button" data-view="list"><i class="fa-solid fa-list"></i> List</button>
+    </div>
+    <span id="count"></span>
+    <button type="button" id="filters-toggle"><i class="fa-solid fa-filter"></i> Filters</button>
+    <a id="join" class="join" target="_blank" rel="noopener noreferrer" hidden>Add yourself</a>
+  </header>
+
+  <main>
+    <aside id="filters" aria-label="Filters">
+      <div id="filter-groups"></div>
+      <button type="button" id="clear" hidden>Clear filters</button>
+    </aside>
+    <section id="map-view">
+      <div id="map"></div>
+      <p id="map-note" hidden></p>
+    </section>
+    <section id="list-view" hidden>
+      <div id="cards"></div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="app.js"></script>
+</body>
+</html>
