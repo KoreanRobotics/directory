@@ -1,5 +1,5 @@
 # Rebuilds data/people.json from data/responses.csv (committed by the Apps Script
-# in apps-script/) and deploys the site to GitHub Pages.
+# in apps-script/) and data/seed.csv, and deploys the site to GitHub Pages.
 name: Sync and deploy
 
 on:
@@ -23,9 +23,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Sync form responses
-        if: hashFiles('data/responses.csv') != ''
-        run: python scripts/sync.py data/responses.csv | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Sync form responses and seed entries
+        run: python scripts/sync.py | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Commit changes
         run: |
           git add data/people.json data/places.csv

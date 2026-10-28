@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Turn a Google Form responses CSV into data/people.json.
+"""Turn Google Form responses (plus data/seed.csv) into data/people.json.
 
 Usage:
-    python scripts/sync.py responses.csv [--no-geocode] [--dry-run]
+    python scripts/sync.py [responses.csv] [--no-geocode] [--dry-run]
 
-Only people whose latest response gives consent and is not a removal request
-are written. Emails are used to find each person's latest response and are
-never written to the repo.
+responses.csv defaults to data/responses.csv. Only people whose latest
+response gives consent and is not a removal request are written. Emails are
+used to find each person's latest response and are never written to the repo.
+data/seed.csv holds organizer-maintained entries in the same columns; a form
+response with the same name replaces the seed entry.
 """
 import argparse
 import csv
@@ -23,6 +25,8 @@ ROOT = Path(__file__).resolve().parent.parent
 PEOPLE = ROOT / "data" / "people.json"
 PLACES = ROOT / "data" / "places.csv"
 TAGS = ROOT / "data" / "tags.json"
+RESPONSES = ROOT / "data" / "responses.csv"
+SEED = ROOT / "data" / "seed.csv"
 
 # Form question text (start of the column header) for each field.
 # If a question is reworded in the form, change it here.
@@ -93,6 +97,15 @@ def map_columns(header):
     if missing:
         sys.exit(f"Missing form columns: {', '.join(COLUMNS[f] for f in missing)}")
     return idx
+
+
+def read_rows(path):
+    """Return (column map, rows as {field: value} dicts) for a form-style CSV."""
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        reader = csv.reader(f)
+        col = map_columns(next(reader))
+        rows = [{k: r[i].strip() for k, i in col.items() if i < len(r)} for r in reader if any(c.strip() for c in r)]
+    return col, rows
 
 
 def clean_url(kind, value):
@@ -168,7 +181,8 @@ def resolve_place(aff, city, country, rows, index, use_geocode):
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("responses", help="CSV downloaded from the form's response Sheet")
+    ap.add_argument("responses", nargs="?", default=str(RESPONSES),
+                    help="form responses CSV (default: data/responses.csv; may be absent)")
     ap.add_argument("--no-geocode", action="store_true", help="don't look up unknown affiliations online")
     ap.add_argument("--dry-run", action="store_true", help="report changes without writing files")
     args = ap.parse_args()
@@ -178,15 +192,20 @@ def main():
     places, place_index = load_places()
     n_places = len(places)
 
-    with open(args.responses, newline="", encoding="utf-8-sig") as f:
-        reader = csv.reader(f)
-        header = next(reader)
-        col = map_columns(header)
-        responses = [r for r in reader if any(c.strip() for c in r)]
+    col, responses = {}, []
+    if Path(args.responses).exists():
+        col, responses = read_rows(args.responses)
+    elif Path(args.responses).resolve() != RESPONSES:
+        sys.exit(f"Not found: {args.responses}")
+    n_seeded = 0
+    if SEED.exists():
+        form_names = {norm(r.get("name", "")) for r in responses}
+        seed = [r for r in read_rows(SEED)[1] if norm(r.get("name", "")) not in form_names]
+        n_seeded = len(seed)
+        responses += seed
 
     def get(row, field):
-        i = col.get(field)
-        return row[i].strip() if i is not None and i < len(row) else ""
+        return row.get(field, "")
 
     # Latest response per person (by email, falling back to name). Without an
     # email column (data/responses.csv, already collapsed by the Apps Script)
@@ -271,7 +290,7 @@ def main():
     removed = sorted(old.keys() - new.keys())
     updated = sorted(i for i in new.keys() & old.keys() if strip(new[i]) != strip(old[i]))
 
-    print(f"{len(responses)} responses -> {len(people)} listed "
+    print(f"{len(responses) - n_seeded} responses + {n_seeded} seed entries -> {len(people)} listed "
           f"(skipped: {skipped['no consent']} without consent, {skipped['removed']} removed, {skipped['hidden']} hidden)")
     for label, ids in (("added", added), ("updated", updated), ("removed", removed)):
         if ids:

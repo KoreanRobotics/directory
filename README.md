@@ -25,6 +25,7 @@ To update an entry, a person submits the form again (or edits their response). T
 |---|---|
 | `index.html`, `app.js`, `style.css` | The page. No build step. `FORM_URL` at the top of `app.js` shows the "Add yourself" button. |
 | `data/responses.csv` | Consenting, latest responses without emails. Written by the Apps Script; don't edit. |
+| `data/seed.csv` | Entries organizers add by hand (currently the organizers and advisors from the main site). Same columns as the form; a form submission with the same name replaces the row. |
 | `data/people.json` | What the page shows. Written by the Action; don't edit. |
 | `data/places.csv` | Affiliation → map location, with `|`-separated aliases. Edit freely. |
 | `data/tags.json` | Research areas offered in the form and used as filters. |
@@ -47,6 +48,7 @@ Run `setup` only once; running it again creates a second form.
 
 - **Hide someone** (spam, a request by email): put an `x` in their **Hidden** cell, then use the Sheet's **KARA → Publish directory now** menu (or wait up to 6 hours).
 - **New affiliations** are looked up on OpenStreetMap and added to `data/places.csv` with `needs_review=1` (listed in each Action run's summary). Check the city and coordinates, add aliases (e.g. `UMich|Michigan`) so spellings group under one pin, and clear the flag.
+- **Add someone by hand**: add a row to `data/seed.csv` and push. To remove a seed entry, delete its row (a "Remove my entry" form submission does not remove seed rows).
 - **Research areas**: edit `data/tags.json`, then update the form's "Research areas" checkbox options to match exactly.
 - **Rewording a form question**: also edit `COLUMNS` at the top of `scripts/sync.py`; columns are matched by the start of the question text.
 

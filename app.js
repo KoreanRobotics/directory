@@ -32,7 +32,11 @@ const hasCoords = (p) => p.place && p.place.lat != null && p.place.lng != null;
 function placeText(p) {
   const pl = p.place || {};
   const second = pl.country === "USA" && pl.region ? pl.region : pl.country;
-  return [pl.city, second].filter(Boolean).join(", ");
+  return [pl.city, second !== pl.city ? second : ""].filter(Boolean).join(", ");
+}
+
+function roleText(p) {
+  return p.title || (p.role !== "other" ? ROLE_LABELS[p.role] : "");
 }
 
 function linksHTML(p) {
@@ -123,7 +127,7 @@ function renderList(shown) {
         <div class="avatar" aria-hidden="true">${esc(initials(p.name))}</div>
         <div class="card-body">
           <h3>${esc(p.name)}${p.name_ko ? ` <span class="ko">${esc(p.name_ko)}</span>` : ""}</h3>
-          <p class="title">${esc(p.title || ROLE_LABELS[p.role] || "")}</p>
+          <p class="title">${esc(roleText(p))}</p>
           <p>${aff}${p.lab ? ` <span class="muted">· ${esc(p.lab)}</span>` : ""}</p>
           <p class="muted small">${esc(placeText(p))}</p>
           ${tags ? `<div class="tags">${tags}</div>` : ""}
@@ -167,7 +171,7 @@ function renderMap(shown) {
     });
     const rows = list.map((p) => `
       <li><strong>${esc(p.name)}</strong>${p.name_ko ? ` <span class="ko">${esc(p.name_ko)}</span>` : ""}
-        <br><span class="muted">${esc(p.title || ROLE_LABELS[p.role] || "")}</span>
+        <br><span class="muted">${esc(roleText(p))}</span>
         <span class="links">${linksHTML(p)}</span></li>`).join("");
     marker.bindPopup(`<div class="popup"><h4>${esc(aff)}</h4><p class="muted small">${esc(placeText(list[0]))}</p><ul>${rows}</ul></div>`,
       { maxHeight: 280, minWidth: 220 });

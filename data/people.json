@@ -1,1 +1,179 @@
-[]
+[
+ {
+  "id": "dongho-kang",
+  "name": "Dongho Kang",
+  "role": "student",
+  "title": "Ph.D. Student",
+  "affiliation": "The University of Texas at Austin",
+  "sector": "Academia",
+  "research": [],
+  "links": {},
+  "place": {
+   "city": "Austin",
+   "region": "Texas",
+   "country": "USA",
+   "lat": 30.2849,
+   "lng": -97.7341
+  },
+  "updated": "2026-10-28"
+ },
+ {
+  "id": "mingyo-seo",
+  "name": "Mingyo Seo",
+  "role": "faculty",
+  "title": "Assistant Professor",
+  "affiliation": "University of Central Florida",
+  "sector": "Academia",
+  "research": [],
+  "links": {},
+  "place": {
+   "city": "Orlando",
+   "region": "Florida",
+   "country": "USA",
+   "lat": 28.6024,
+   "lng": -81.2001
+  },
+  "updated": "2026-10-28"
+ },
+ {
+  "id": "seongwon-lee",
+  "name": "Seongwon Lee",
+  "role": "student",
+  "title": "Ph.D. Student",
+  "affiliation": "University of Illinois Urbana-Champaign",
+  "sector": "Academia",
+  "research": [],
+  "links": {},
+  "place": {
+   "city": "Urbana",
+   "region": "Illinois",
+   "country": "USA",
+   "lat": 40.102,
+   "lng": -88.2272
+  },
+  "updated": "2026-10-28"
+ },
+ {
+  "id": "seungjae-baek",
+  "name": "Seungjae Baek",
+  "role": "other",
+  "affiliation": "Carnegie Mellon University",
+  "sector": "Other",
+  "research": [],
+  "links": {},
+  "place": {
+   "city": "Pittsburgh",
+   "region": "Pennsylvania",
+   "country": "USA",
+   "lat": 40.4433,
+   "lng": -79.9436
+  },
+  "updated": "2026-10-28"
+ },
+ {
+  "id": "sungkyung-kim",
+  "name": "Sungkyung Kim",
+  "role": "other",
+  "affiliation": "Georgia Institute of Technology",
+  "sector": "Other",
+  "research": [],
+  "links": {},
+  "place": {
+   "city": "Atlanta",
+   "region": "Georgia",
+   "country": "USA",
+   "lat": 33.7756,
+   "lng": -84.3963
+  },
+  "updated": "2026-10-28"
+ },
+ {
+  "id": "sungmin-kim",
+  "name": "Sungmin Kim",
+  "role": "student",
+  "title": "Ph.D. Student",
+  "affiliation": "Georgia Institute of Technology",
+  "sector": "Academia",
+  "research": [],
+  "links": {},
+  "place": {
+   "city": "Atlanta",
+   "region": "Georgia",
+   "country": "USA",
+   "lat": 33.7756,
+   "lng": -84.3963
+  },
+  "updated": "2026-10-28"
+ },
+ {
+  "id": "wonsuhk-jung",
+  "name": "Wonsuhk Jung",
+  "role": "student",
+  "title": "Ph.D. Student",
+  "affiliation": "Georgia Institute of Technology",
+  "sector": "Academia",
+  "research": [],
+  "links": {},
+  "place": {
+   "city": "Atlanta",
+   "region": "Georgia",
+   "country": "USA",
+   "lat": 33.7756,
+   "lng": -84.3963
+  },
+  "updated": "2026-10-28"
+ },
+ {
+  "id": "woochul-shin",
+  "name": "WooChul Shin",
+  "role": "other",
+  "affiliation": "University of Maryland, College Park",
+  "sector": "Other",
+  "research": [],
+  "links": {},
+  "place": {
+   "city": "College Park",
+   "region": "Maryland",
+   "country": "USA",
+   "lat": 38.9869,
+   "lng": -76.9426
+  },
+  "updated": "2026-10-28"
+ },
+ {
+  "id": "yoonchang-sung",
+  "name": "Yoonchang Sung",
+  "role": "faculty",
+  "title": "Assistant Professor",
+  "affiliation": "Nanyang Technological University",
+  "sector": "Academia",
+  "research": [],
+  "links": {},
+  "place": {
+   "city": "Singapore",
+   "region": "",
+   "country": "Singapore",
+   "lat": 1.3483,
+   "lng": 103.6831
+  },
+  "updated": "2026-10-28"
+ },
+ {
+  "id": "yunsoo-seo",
+  "name": "Yunsoo Seo",
+  "role": "student",
+  "title": "Ph.D. Student",
+  "affiliation": "The University of Texas at Austin",
+  "sector": "Academia",
+  "research": [],
+  "links": {},
+  "place": {
+   "city": "Austin",
+   "region": "Texas",
+   "country": "USA",
+   "lat": 30.2849,
+   "lng": -97.7341
+  },
+  "updated": "2026-10-28"
+ }
+]
