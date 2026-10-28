@@ -248,7 +248,7 @@ function bind() {
   }
 }
 
-fetch("data/people.json")
+fetch("data/people.json", { cache: "no-cache" }) // revalidate so new entries show up right away
   .then((r) => r.json())
   .then((data) => {
     people = data;
