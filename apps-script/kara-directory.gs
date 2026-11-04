@@ -5,10 +5,16 @@
 // See the README for details.
 //
 // On every form submission, publish() collapses the responses to each
-// person's latest one, drops people without consent, removal requests and
-// rows an organizer marked in the "Hidden" column, removes the email column,
-// and commits the result to data/responses.csv. A GitHub Action then turns
-// that file into data/people.json and redeploys the site.
+// person's latest one, keeps only people an organizer marked in the
+// "Approved" column, drops people without consent, removal requests and rows
+// marked "Hidden", removes the email and organizer columns, and commits the
+// result to data/responses.csv. A GitHub Action then turns that file into
+// data/people.json and redeploys the site.
+//
+// Approval is per person (by verified email): once approved, later updates
+// from the same Google account go live without another review. If the
+// NOTIFY_EMAILS script property is set (comma-separated), those addresses get
+// an email when someone new is waiting for approval.
 
 const REPO = "KoreanRobotics/directory";
 const CSV_PATH = "data/responses.csv";
@@ -26,6 +32,7 @@ function setup() {
   form.setDescription(
     `Add yourself to the KARA member directory (https://${SITE_URL}/). ` +
     "Only what you enter here is shown, and only if you tick the consent box. Your email is never published. " +
+    "New entries appear after an organizer approves them. " +
     "To update your entry, submit again; to be removed, choose \"Remove my entry\"."
   );
   try {
@@ -57,13 +64,7 @@ function setup() {
   form.setDestination(FormApp.DestinationType.SPREADSHEET, ss.getId());
   SpreadsheetApp.flush();
 
-  const sheet = responseSheet();
-  const last = sheet.getLastColumn();
-  if (last > 0 && sheet.getRange(1, 1).getValue() === "Timestamp") {
-    sheet.getRange(1, last + 1).setValue("Hidden").setNote("Organizers: put an x here to hide this person.");
-  } else {
-    Logger.log('Header row not created yet: after the first response, type "Hidden" in the first empty header cell.');
-  }
+  ensureColumns(responseSheet()); // otherwise added on the first publish
 
   ScriptApp.newTrigger("publish").forSpreadsheet(ss).onFormSubmit().create();
   ScriptApp.newTrigger("publish").timeBased().everyHours(6).create(); // catches missed or failed runs
@@ -78,12 +79,41 @@ function onOpen() {
 
 // ---- publishing ----
 
-function publish() {
-  const range = responseSheet().getDataRange();
+function publish(e) {
+  const sheet = responseSheet();
+  ensureColumns(sheet);
+  const range = sheet.getDataRange();
   const display = range.getDisplayValues();
   const values = range.getValues();
   const csv = buildResponsesCsv(display[0], display.slice(1), values.slice(1).map((r) => r[0]));
   commitIfChanged(csv);
+  if (e && e.namedValues) notifyIfPending(e.namedValues, display[0], display.slice(1));
+}
+
+// Organizer columns, appended to the right of the form's columns.
+function ensureColumns(sheet) {
+  const last = sheet.getLastColumn();
+  if (!last || sheet.getRange(1, 1).getValue() !== "Timestamp") return; // no responses yet
+  const header = sheet.getRange(1, 1, 1, last).getDisplayValues()[0].map((h) => h.trim().toLowerCase());
+  let col = last;
+  for (const [name, note] of [
+    ["Approved", "Organizers: put an x here to list this person. Approval carries over to their later updates."],
+    ["Hidden", "Organizers: put an x here to hide this person, even if approved."],
+  ]) {
+    if (!header.includes(name.toLowerCase())) sheet.getRange(1, ++col).setValue(name).setNote(note);
+  }
+}
+
+function notifyIfPending(named, header, rows) {
+  const to = PropertiesService.getScriptProperties().getProperty("NOTIFY_EMAILS");
+  if (!to) return;
+  const v = (k) => String((named[k] || [""])[0]).trim();
+  if (v("Action").toLowerCase().startsWith("remove") || !v("Consent")) return;
+  if (isApproved(header, rows, v("Email address"))) return;
+  MailApp.sendEmail(to, `KARA directory: ${v("Name (English)")} is waiting for approval`,
+    `${v("Name (English)")} (${v("Affiliation")}, ${v("Email address")}) asked to be listed.\n\n` +
+    `To approve, put an x in their "Approved" cell and use KARA > Publish directory now:\n` +
+    SpreadsheetApp.getActive().getUrl());
 }
 
 function responseSheet() {
@@ -128,22 +158,41 @@ function commitIfChanged(csv) {
 
 // ---- pure logic (no Apps Script services; tested with node) ----
 
-const PRIVATE_COLUMNS = ["email address", "hidden"];
+const PRIVATE_COLUMNS = ["email address", "approved", "hidden"];
+
+const colFinder = (header) => (name) => header.findIndex((h) => h.trim().toLowerCase().startsWith(name));
+
+function personKey(r, iEmail, iName) {
+  return (iEmail >= 0 && r[iEmail].trim().toLowerCase()) || r[iName].trim().toLowerCase();
+}
+
+// Marked people, by email: an x in any of a person's rows counts.
+function markedKeys(header, rows, column) {
+  const find = colFinder(header);
+  const iEmail = find("email address"), iName = find("name (english)"), iCol = find(column);
+  const keys = new Set();
+  if (iCol < 0) return keys;
+  for (const r of rows) if (r[iCol].trim()) keys.add(personKey(r, iEmail, iName));
+  return keys;
+}
+
+function isApproved(header, rows, email) {
+  return markedKeys(header, rows, "approved").has(email.trim().toLowerCase());
+}
 
 function buildResponsesCsv(header, rows, times) {
-  const find = (name) => header.findIndex((h) => h.trim().toLowerCase().startsWith(name));
+  const find = colFinder(header);
   const iEmail = find("email address");
   const iName = find("name (english)");
   const iAction = find("action");
   const iConsent = find("consent");
-  const iHidden = find("hidden");
+  const approved = markedKeys(header, rows, "approved"); // no Approved column: nobody is published
+  const hidden = markedKeys(header, rows, "hidden");
 
   const latest = new Map();
-  const hidden = new Set();
   rows.forEach((r, n) => {
     if (!r.some((c) => String(c).trim())) return;
-    const key = (iEmail >= 0 && r[iEmail].trim().toLowerCase()) || r[iName].trim().toLowerCase();
-    if (iHidden >= 0 && r[iHidden].trim()) hidden.add(key); // hiding any row hides the person
+    const key = personKey(r, iEmail, iName);
     const t = new Date(times[n]).getTime();
     if (!latest.has(key) || t >= latest.get(key).t) latest.set(key, { t, r });
   });
@@ -151,7 +200,7 @@ function buildResponsesCsv(header, rows, times) {
   const keep = header.map((h, i) => i).filter((i) => !PRIVATE_COLUMNS.includes(header[i].trim().toLowerCase()));
   const out = [keep.map((i) => header[i])];
   for (const [key, { r }] of latest) {
-    if (hidden.has(key)) continue;
+    if (!approved.has(key) || hidden.has(key)) continue;
     if (iAction >= 0 && r[iAction].trim().toLowerCase().startsWith("remove")) continue;
     if (iConsent < 0 || !r[iConsent].trim()) continue;
     out.push(keep.map((i) => r[i]));
@@ -160,4 +209,4 @@ function buildResponsesCsv(header, rows, times) {
   return out.map((row) => row.map(cell).join(",")).join("\n") + "\n";
 }
 
-if (typeof module !== "undefined") module.exports = { buildResponsesCsv };
+if (typeof module !== "undefined") module.exports = { buildResponsesCsv, isApproved };
