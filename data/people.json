@@ -38,12 +38,20 @@
  {
   "id": "seongwon-lee",
   "name": "Seongwon Lee",
+  "name_ko": "이성원",
   "role": "student",
   "title": "Ph.D. Student",
   "affiliation": "University of Illinois Urbana-Champaign",
   "sector": "Academia",
-  "research": [],
-  "links": {},
+  "lab": "Parasol Lab",
+  "research": [
+   "Multi-Robot Systems"
+  ],
+  "links": {
+   "homepage": "https://sl148.github.io",
+   "scholar": "https://scholar.google.com/citations?user=VlWt9PIAAAAJ&hl=en&oi=ao",
+   "linkedin": "https://www.linkedin.com/in/scott-seongwon-lee-789b05221/"
+  },
   "place": {
    "city": "Urbana",
    "region": "Illinois",
